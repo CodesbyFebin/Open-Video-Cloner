@@ -1130,24 +1130,7 @@ function renderLogs() {
 function renderExportHistory() {
   const container = document.getElementById('export-history');
   if (!container) return;
-  const exports = [
-    { name:'tech_review_clone_v2.webm', size:'245 MB', format:'WebM', time:'2 hours ago', status:'done' },
-    { name:'cooking_tutorial_final.mp4', size:'512 MB', format:'MP4', time:'5 hours ago', status:'done' },
-    { name:'japan_vlog_remix.mov', size:'1.2 GB', format:'MOV', time:'Yesterday', status:'done' },
-  ];
-  container.innerHTML = exports.map(e => \`
-    <div class="flex items-center gap-3 p-3 bg-[#1a1a2e] rounded-lg hover:bg-[#2a2a3e] transition">
-      <div class="text-xl">\${e.format==='WebM'?'🌐':e.format==='MP4'?'🎬':'🍎'}</div>
-      <div class="flex-1">
-        <div class="text-xs font-semibold mono">\${e.name}</div>
-        <div class="text-[10px] text-[#8888a8]">\${e.size} • \${e.format} • \${e.time}</div>
-      </div>
-      <div class="flex gap-2">
-        <button class="px-2 py-1 bg-[#6c5ce7]/20 text-[#6c5ce7] rounded text-[10px] hover:bg-[#6c5ce7]/30 transition" onclick="showNotification('Download started','success')">⬇ Download</button>
-        <button class="px-2 py-1 bg-[#1a1a2e] rounded text-[10px] hover:bg-[#2a2a3e] transition" onclick="showNotification('Opening in editor','info')">Edit</button>
-      </div>
-    </div>
-  \`).join('');
+  container.innerHTML = '<p class="text-sm text-[#8888a8]">No real exports yet. Media processing is not connected.</p>';
 }
 
 // ===== NAVIGATION =====
@@ -1173,9 +1156,9 @@ function switchTab(e, tab) {
     logs:'Activity Logs', settings:'Settings'
   };
   const badges = {
-    dashboard:'Overview', workflow:'Pipeline', agents:'8 Active',
-    tools:'16 Tools', editor:'Timeline', export:'Ready',
-    logs:'Live', settings:'Config'
+    dashboard:'Prototype', workflow:'Illustration', agents:'Not wired',
+    tools:'Catalog', editor:'Mockup', export:'Unavailable',
+    logs:'No live logs', settings:'Config'
   };
   
   const pageTitle = document.getElementById('page-title');
@@ -1195,54 +1178,25 @@ function filterTools(cat, btn) {
 
 // ===== ACTIONS =====
 async function analyzeSource() {
-  const url = document.getElementById('source-url').value;
-  if(!url) { showNotification('Please enter a source URL','warn'); return; }
-  showNotification('Analyzing source video...','info');
-  await addLog('info','Analyzing source: '+url.substring(0,50)+'...');
-  setTimeout(async ()=>{
-    await addLog('success','Analysis complete: 1080p, 30fps, 4:32 duration, 47 scenes detected');
-    showNotification('Analysis complete! 47 scenes detected.','success');
-  },2000);
+  showNotification('Source analysis is not available in this prototype.','warn');
 }
-
 async function startCloning() {
-  // Prevent multiple clicks from spawning duplicate jobs if we wanted to be strict,
-  // but let's just rely on backend creating a new job.
-  showNotification('🚀 Agentic cloning pipeline started!','success');
-  await addLog('info','Starting agentic cloning pipeline...');
-  await addLog('info','Activating 8 agents in parallel...');
-  
-  const source = document.getElementById('source-url') ? document.getElementById('source-url').value : '';
-  
+  const source = document.getElementById('source-url')?.value || '';
   try {
     const res = await fetch('/api/clone', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({source})
     });
-    
     const data = await res.json();
-    if(data.status === 'started') {
-      // Backend will update state, the poller will fetch it.
-    }
-  } catch(e) {
-    console.error(e);
-  }
+    showNotification(data.error || 'Cloning is not available.', 'warn');
+  } catch(e) { showNotification('Unable to connect to the server.','warn'); }
 }
-
 async function startExport() {
-  showNotification('📦 Export started...','info');
-  await addLog('info','Exporting video in WebM (VP9) format...');
-  
   try {
-    await fetch('/api/export', { method: 'POST' });
-    setTimeout(async ()=>{
-      await addLog('success','Export complete: cloned_video_output.webm (245 MB)');
-      showNotification('✅ Export complete! File ready for download.','success');
-    },3000);
-  } catch(e) {
-    console.error(e);
-  }
+    const res = await fetch('/api/export', {method:'POST'});
+    const data = await res.json();
+    showNotification(data.error || 'Export is not available.', 'warn');
+  } catch(e) { showNotification('Unable to connect to the server.','warn'); }
 }
 
 function selectExportFormat(el, fmt) {
