@@ -317,9 +317,9 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
         <div class="flex items-center gap-2 bg-[#1a1a2e] rounded-lg px-3 py-1.5">
           <span class="text-xs text-[#8888a8]">Project:</span>
           <select id="project-select" class="bg-transparent text-sm text-white outline-none cursor-pointer">
-            <option>Video Clone #001</option>
-            <option>Marketing Clone</option>
-            <option>Tutorial Remake</option>
+            <option>Local FFmpeg Workspace</option>
+            
+            
           </select>
         </div>
         <button onclick="startCloning()" class="px-4 py-1.5 bg-gradient-to-r from-[#6c5ce7] to-[#00cec9] rounded-lg text-sm font-semibold hover:opacity-90 transition">
@@ -929,12 +929,12 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
     <footer class="h-8 bg-[#12121a] border-t border-[#2a2a3e] flex items-center justify-between px-4 flex-shrink-0">
       <div class="flex items-center gap-4 text-[10px] mono text-[#8888a8]">
         <span class="flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-green-400"></div> Connected</span>
-        <span>Agents: <span class="text-[#00cec9]" id="agents-active-count">8/8 active</span></span>
-        <span>Queue: <span class="text-[#fdcb6e]" id="queue-count">2 jobs</span></span>
+        <span>Agents: <span class="text-[#00cec9]" id="agents-active-count">0 AI agents enabled</span></span>
+        <span>Queue: <span class="text-[#fdcb6e]" id="queue-count">0 jobs</span></span>
       </div>
       <div class="flex items-center gap-4 text-[10px] mono text-[#8888a8]">
-        <span>GPU: <span class="text-[#00cec9]">42%</span></span>
-        <span>Memory: <span class="text-[#fdcb6e]">4.2/16 GB</span></span>
+        <span>GPU: <span class="text-[#00cec9]">not monitored</span></span>
+        <span>Memory: <span class="text-[#fdcb6e]">not monitored</span></span>
         <span id="clock">00:00:00</span>
       </div>
     </footer>
@@ -1394,6 +1394,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     document.getElementById('stat-agents').textContent='0';
     document.getElementById('stat-tools').textContent='3';
     renderJobs();renderExportHistory();renderPipeline();
+    const queue=document.getElementById('queue-count');if(queue)queue.textContent=jobs.filter(j=>j.status==='queued'||j.status==='processing').length+' jobs';
+    const agentsCount=document.getElementById('agents-active-count');if(agentsCount)agentsCount.textContent='0 AI agents enabled';
   };
   renderJobs=function(){
     const target=document.getElementById('jobs-table');if(!target)return;
