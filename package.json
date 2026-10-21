@@ -1,8 +1,8 @@
 {
   "name": "open-video-cloner",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Open Video Cloner UI prototype; media processing not yet implemented",
+  "description": "Local FFmpeg-backed video tools with persistent jobs and real progress; AI cloning not implemented",
   "license": "MIT",
   "main": "server.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "multer": "^2.0.2"
   }
 }
