@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Video Cloner — Agentic Video Cloning Workflow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.6/index.css">
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a2e;
+  --accent: #6c5ce7;
+  --accent2: #00cec9;
+  --accent3: #fd79a8;
+  --accent4: #fdcb6e;
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888a8;
+  --border: #2a2a3e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(--text-primary); overflow-x:hidden; }
+.mono { font-family:'JetBrains Mono',monospace; }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background:var(--accent); border-radius:3px; }
+
+.glow-purple { box-shadow:0 0 20px rgba(108,92,231,0.3); }
+.glow-cyan { box-shadow:0 0 20px rgba(0,206,201,0.3); }
+.glow-pink { box-shadow:0 0 20px rgba(253,121,168,0.3); }
+
+@keyframes pulse-glow {
+  0%,100% { box-shadow:0 0 5px rgba(108,92,231,0.3); }
+  50% { box-shadow:0 0 25px rgba(108,92,231,0.6); }
+}
+@keyframes flow {
+  0% { background-position:0% 50%; }
+  100% { background-position:200% 50%; }
+}
+@keyframes spin-slow { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+@keyframes slide-up { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
+@keyframes typing { 0%{width:0} 100%{width:100%} }
+@keyframes blink { 0%,100%{border-color:transparent} 50%{border-color:var(--accent)} }
+@keyframes progress-stripe {
+  0% { background-position:1rem 0; }
+  100% { background-position:0 0; }
+}
+@keyframes float {
+  0%,100% { transform:translateY(0px); }
+  50% { transform:translateY(-8px); }
+}
+@keyframes data-flow {
+  0% { left:-10%; opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  100% { left:110%; opacity:0; }
+}
+
+.animate-slide-up { animation:slide-up 0.5s ease forwards; }
+.animate-float { animation:float 3s ease-in-out infinite; }
+.animate-spin-slow { animation:spin-slow 8s linear infinite; }
+
+.gradient-border {
+  position:relative;
+  background:var(--bg-secondary);
+  border-radius:12px;
+}
+.gradient-border::before {
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:13px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3));
+  z-index:-1;
+  opacity:0.5;
+}
+
+.flow-line {
+  height:3px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);
+  background-size:200% 100%;
+  animation:flow 2s linear infinite;
+}
+
+.agent-card { transition:all 0.3s ease; }
+.agent-card:hover { transform:translateY(-4px); }
+.agent-card.active { animation:pulse-glow 2s ease-in-out infinite; }
+
+.tool-btn { transition:all 0.2s ease; }
+.tool-btn:hover { transform:scale(1.05); }
+.tool-btn.selected { border-color:var(--accent)!important; background:rgba(108,92,231,0.15)!important; }
+
+.progress-bar {
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:4px;
+  transition:width 0.5s ease;
+}
+.progress-stripe {
+  background-image:linear-gradient(45deg,rgba(255,255,255,.1) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.1) 75%,transparent 75%,transparent);
+  background-size:1rem 1rem;
+  animation:progress-stripe 0.5s linear infinite;
+}
+
+.tab-btn { transition:all 0.2s ease; position:relative; }
+.tab-btn::after {
+  content:'';
+  position:absolute;
+  bottom:0; left:50%;
+  width:0; height:2px;
+  background:var(--accent);
+  transition:all 0.3s ease;
+  transform:translateX(-50%);
+}
+.tab-btn.active::after { width:100%; }
+.tab-btn.active { color:var(--accent); }
+
+.nav-item { transition:all 0.2s ease; border-left:3px solid transparent; }
+.nav-item:hover { background:rgba(108,92,231,0.1); }
+.nav-item.active { background:rgba(108,92,231,0.15); border-left-color:var(--accent); }
+
+.data-particle {
+  position:absolute;
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--accent2);
+  animation:data-flow 3s linear infinite;
+}
+
+.waveform-bar {
+  display:inline-block;
+  width:3px;
+  margin:0 1px;
+  background:var(--accent);
+  border-radius:2px;
+  animation:waveform 0.8s ease-in-out infinite;
+}
+@keyframes waveform {
+  0%,100% { height:4px; }
+  50% { height:20px; }
+}
+
+.log-entry { animation:slide-up 0.3s ease forwards; }
+
+.timeline-track {
+  height:40px;
+  background:var(--bg-tertiary);
+  border-radius:6px;
+  position:relative;
+  overflow:hidden;
+}
+.timeline-clip {
+  position:absolute;
+  height:100%;
+  border-radius:4px;
+  display:flex;
+  align-items:center;
+  padding:0 8px;
+  font-size:11px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+.timeline-clip:hover { filter:brightness(1.2); }
+
+.agent-node {
+  width:80px; height:80px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  position:relative;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+.agent-node:hover { transform:scale(1.1); }
+.agent-node.processing::after {
+  content:'';
+  position:absolute;
+  inset:-4px;
+  border-radius:50%;
+  border:2px solid var(--accent2);
+  animation:spin-slow 2s linear infinite;
+  border-top-color:transparent;
+  border-left-color:transparent;
+}
+
+.connector-line {
+  height:2px;
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+.connector-line::after {
+  content:'';
+  position:absolute;
+  top:0; left:-30%;
+  width:30%; height:100%;
+  background:linear-gradient(90deg,transparent,var(--accent2),transparent);
+  animation:data-flow 2s linear infinite;
+}
+
+.modal-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(4px);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.badge {
+  display:inline-flex;
+  align-items:center;
+  padding:2px 8px;
+  border-radius:9999px;
+  font-size:11px;
+  font-weight:600;
+}
+
+.tooltip {
+  position:relative;
+}
+.tooltip::after {
+  content:attr(data-tip);
+  position:absolute;
+  bottom:100%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:4px 8px;
+  background:var(--bg-tertiary);
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-size:11px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.2s;
+}
+.tooltip:hover::after { opacity:1; }
+</style>
+</head>
+<body>
+<div id="app" class="flex h-screen">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 bg-[#12121a] border-r border-[#2a2a3e] flex flex-col flex-shrink-0">
+    <!-- Logo -->
+    <div class="p-5 border-b border-[#2a2a3e]">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#00cec9] flex items-center justify-center text-xl font-bold">
+          ▶
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-wide">OPEN VIDEO CLONER</h1>
+          <p class="text-[10px] text-[#8888a8] mono">v2.0 • Agentic Workflow</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <div class="px-4 mb-2 text-[10px] font-semibold text-[#8888a8] uppercase tracking-wider">Main</div>
+      <div class="nav-item active px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'dashboard')">
+        <span>📊</span> Dashboard
+      </div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'workflow')">
+        <span>🔄</span> Workflow
+      </div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'agents')">
+        <span>🤖</span> Agent Harness
+      </div>
+
+      <div class="px-4 mt-5 mb-2 text-[10px] font-semibold text-[#8888a8] uppercase tracking-wider">Tools</div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'tools')">
+        <span>🧰</span> All Tools
+      </div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'editor')">
+        <span>🎬</span> Timeline Editor
+      </div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'export')">
+        <span>📦</span> Export Center
+      </div>
+
+      <div class="px-4 mt-5 mb-2 text-[10px] font-semibold text-[#8888a8] uppercase tracking-wider">System</div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'logs')">
+        <span>📋</span> Activity Logs
+      </div>
+      <div class="nav-item px-5 py-2.5 cursor-pointer flex items-center gap-3 text-sm" onclick="switchTab(event, 'settings')">
+        <span>⚙️</span> Settings
+      </div>
+    </nav>
+
+    <!-- Status -->
+    <div class="p-4 border-t border-[#2a2a3e]">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+        <span class="text-xs text-[#8888a8]">All Systems Operational</span>
+      </div>
+      <div class="text-[10px] mono text-[#8888a8]">
+        GPU: <span class="text-[#00cec9]">Active</span> • RAM: <span class="text-[#fdcb6e]">4.2GB</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top Bar -->
+    <header class="h-14 bg-[#12121a] border-b border-[#2a2a3e] flex items-center justify-between px-6 flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <h2 id="page-title" class="text-base font-semibold">Dashboard</h2>
+        <span id="page-badge" class="badge bg-[#6c5ce7]/20 text-[#6c5ce7]">Overview</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-[#1a1a2e] rounded-lg px-3 py-1.5">
+          <span class="text-xs text-[#8888a8]">Project:</span>
+          <select id="project-select" class="bg-transparent text-sm text-white outline-none cursor-pointer">
+            <option>Video Clone #001</option>
+            <option>Marketing Clone</option>
+            <option>Tutorial Remake</option>
+          </select>
+        </div>
+        <button onclick="startCloning()" class="px-4 py-1.5 bg-gradient-to-r from-[#6c5ce7] to-[#00cec9] rounded-lg text-sm font-semibold hover:opacity-90 transition">
+          ▶ Run Pipeline
+        </button>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#fd79a8] to-[#fdcb6e] flex items-center justify-center text-sm font-bold cursor-pointer">
+          U
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="flex-1 overflow-y-auto p-6" id="content-area">
+      <!-- Dashboard Tab -->
+      <div id="tab-dashboard" class="tab-content">
+        <!-- Stats Row -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="gradient-border p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-[#8888a8]">Videos Processed</span>
+              <span class="text-lg">🎥</span>
+            </div>
+            <div class="text-2xl font-bold mono" id="stat-videos">247</div>
+            <div class="text-xs text-green-400 mt-1">↑ 12% this week</div>
+          </div>
+          <div class="gradient-border p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-[#8888a8]">Active Agents</span>
+              <span class="text-lg">🤖</span>
+            </div>
+            <div class="text-2xl font-bold mono" id="stat-agents">8</div>
+            <div class="text-xs text-[#00cec9] mt-1">All healthy</div>
+          </div>
+          <div class="gradient-border p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-[#8888a8]">Tools Available</span>
+              <span class="text-lg">🧰</span>
+            </div>
+            <div class="text-2xl font-bold mono" id="stat-tools">16</div>
+            <div class="text-xs text-[#fdcb6e] mt-1">4 new this month</div>
+          </div>
+          <div class="gradient-border p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-[#8888a8]">Success Rate</span>
+              <span class="text-lg">✅</span>
+            </div>
+            <div class="text-2xl font-bold mono" id="stat-rate">98.7%</div>
+            <div class="text-xs text-[#fd79a8] mt-1">↑ 0.3% improvement</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions + Recent -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="col-span-2 gradient-border p-5">
+            <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+              <span>⚡</span> Quick Start — New Clone Job
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Source Video URL or Upload</label>
+                <div class="flex gap-2">
+                  <input type="text" id="source-url" placeholder="https://youtube.com/watch?v=... or drag & drop video file" class="flex-1 bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#6c5ce7] transition">
+                  <button onclick="analyzeSource()" class="px-4 py-2 bg-[#6c5ce7] rounded-lg text-sm font-semibold hover:bg-[#5a4bd6] transition">
+                    🔍 Analyze
+                  </button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs text-[#8888a8] mb-1 block">Clone Style</label>
+                  <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                    <option>Exact Replica</option>
+                    <option>Style Transfer</option>
+                    <option>Content Remix</option>
+                    <option>Template Based</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs text-[#8888a8] mb-1 block">Output Format</label>
+                  <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                    <option>MP4 (H.264)</option>
+                    <option>WebM (VP9)</option>
+                    <option>MOV (ProRes)</option>
+                    <option>AV1</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Agent Pipeline</label>
+                <div class="flex flex-wrap gap-2" id="quick-agents">
+                  <span class="badge bg-[#6c5ce7]/20 text-[#6c5ce7] cursor-pointer hover:bg-[#6c5ce7]/40 transition" onclick="this.classList.toggle('ring-2'); this.classList.toggle('ring-[#6c5ce7]')">🧠 Scene Analyzer</span>
+                  <span class="badge bg-[#00cec9]/20 text-[#00cec9] cursor-pointer hover:bg-[#00cec9]/40 transition ring-2 ring-[#00cec9]">🎨 Style Transfer</span>
+                  <span class="badge bg-[#fd79a8]/20 text-[#fd79a8] cursor-pointer hover:bg-[#fd79a8]/40 transition ring-2 ring-[#fd79a8]">🎵 Audio Clone</span>
+                  <span class="badge bg-[#fdcb6e]/20 text-[#fdcb6e] cursor-pointer hover:bg-[#fdcb6e]/40 transition ring-2 ring-[#fdcb6e]">📝 Script Gen</span>
+                  <span class="badge bg-[#e17055]/20 text-[#e17055] cursor-pointer hover:bg-[#e17055]/40 transition">🗣️ Voice Clone</span>
+                  <span class="badge bg-[#00b894]/20 text-[#00b894] cursor-pointer hover:bg-[#00b894]/40 transition">🎭 Face Sync</span>
+                </div>
+              </div>
+              <button onclick="startCloning()" class="w-full py-3 bg-gradient-to-r from-[#6c5ce7] via-[#00cec9] to-[#fd79a8] rounded-lg text-sm font-bold hover:opacity-90 transition mt-2">
+                🚀 Start Agentic Cloning Pipeline
+              </button>
+            </div>
+          </div>
+
+          <div class="gradient-border p-5">
+            <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+              <span>📡</span> Live Agent Status
+            </h3>
+            <div class="space-y-3" id="agent-status-list">
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline Visualization -->
+        <div class="gradient-border p-5 mb-6">
+          <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+            <span>🔄</span> Active Pipeline — Video Clone #001
+          </h3>
+          <div id="pipeline-viz" class="flex items-center gap-0 mb-4">
+          </div>
+          <div class="mt-4">
+            <div class="flex justify-between text-xs text-[#8888a8] mb-1">
+              <span>Overall Progress</span>
+              <span class="mono" id="pipeline-progress-text">67%</span>
+            </div>
+            <div class="w-full h-2 bg-[#1a1a2e] rounded-full overflow-hidden">
+              <div class="progress-bar progress-stripe h-full" id="pipeline-progress-bar" style="width:67%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Jobs -->
+        <div class="gradient-border p-5">
+          <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+            <span>📂</span> Recent Clone Jobs
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs text-[#8888a8] border-b border-[#2a2a3e]">
+                  <th class="pb-2 pr-4">Job ID</th>
+                  <th class="pb-2 pr-4">Source</th>
+                  <th class="pb-2 pr-4">Agents Used</th>
+                  <th class="pb-2 pr-4">Status</th>
+                  <th class="pb-2 pr-4">Duration</th>
+                  <th class="pb-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-table">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workflow Tab -->
+      <div id="tab-workflow" class="tab-content hidden">
+        <div class="gradient-border p-6 mb-6">
+          <h3 class="text-lg font-semibold mb-2">Agentic Video Cloning Workflow</h3>
+          <p class="text-sm text-[#8888a8] mb-6">Visual representation of the multi-agent pipeline that processes your video clone job from input to output.</p>
+          
+          <!-- Workflow Diagram -->
+          <div class="relative">
+            <!-- Row 1 -->
+            <div class="flex items-center justify-center gap-0 mb-8">
+              <div class="agent-node bg-gradient-to-br from-[#6c5ce7] to-[#5a4bd6]" data-tip="Input Handler">
+                📥
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#00cec9] to-[#00b5b0]" data-tip="Scene Analyzer">
+                🧠
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#fd79a8] to-[#e84393]" data-tip="Content Extractor">
+                📋
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#fdcb6e] to-[#f39c12]" data-tip="Script Generator">
+                📝
+              </div>
+            </div>
+            <!-- Row 2 -->
+            <div class="flex items-center justify-center gap-0 mb-8">
+              <div class="agent-node bg-gradient-to-br from-[#e17055] to-[#d63031]" data-tip="Voice Cloner">
+                🗣️
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#00b894] to-[#00a381]" data-tip="Face Sync">
+                🎭
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#a29bfe] to-[#6c5ce7]" data-tip="Style Transfer">
+                🎨
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#55a3e1] to-[#3073d6]" data-tip="Audio Engine">
+                🎵
+              </div>
+            </div>
+            <!-- Row 3 -->
+            <div class="flex items-center justify-center gap-0">
+              <div class="agent-node bg-gradient-to-br from-[#fd79a8] to-[#6c5ce7]" data-tip="Video Composer">
+                🎬
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#00cec9] to-[#fdcb6e]" data-tip="Quality Checker">
+                ✅
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#fdcb6e] to-[#e17055]" data-tip="Encoder">
+                📦
+              </div>
+              <div class="connector-line w-20"></div>
+              <div class="agent-node bg-gradient-to-br from-[#00b894] to-[#00cec9]" data-tip="Output">
+                🚀
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow Steps Detail -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="gradient-border p-5">
+            <h4 class="text-sm font-semibold mb-3">📥 Stage 1: Input & Analysis</h4>
+            <div class="space-y-2 text-xs text-[#8888a8]">
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Video URL parsing & download</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Resolution & codec detection</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Frame extraction (24/30/60fps)</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Audio track separation</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Metadata extraction</div>
+            </div>
+          </div>
+          <div class="gradient-border p-5">
+            <h4 class="text-sm font-semibold mb-3">🧠 Stage 2: Scene Intelligence</h4>
+            <div class="space-y-2 text-xs text-[#8888a8]">
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Shot boundary detection</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Scene segmentation</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Object & face recognition</div>
+              <div class="flex items-center gap-2"><span class="text-green-400">✓</span> Motion analysis</div>
+              <div class="flex items-center gap-2"><span class="text-[#fdcb6e]">◐</span> Semantic understanding</div>
+            </div>
+          </div>
+          <div class="gradient-border p-5">
+            <h4 class="text-sm font-semibold mb-3">🎨 Stage 3: Content Generation</h4>
+            <div class="space-y-2 text-xs text-[#8888a8]">
+              <div class="flex items-center gap-2"><span class="text-[#fdcb6e]">◐</span> Script/Dialogue generation</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Voice synthesis & cloning</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Visual style transfer</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Lip-sync generation</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Background music matching</div>
+            </div>
+          </div>
+          <div class="gradient-border p-5">
+            <h4 class="text-sm font-semibold mb-3">📦 Stage 4: Assembly & Output</h4>
+            <div class="space-y-2 text-xs text-[#8888a8]">
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Multi-track composition</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Transition smoothing</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Quality assessment (SSIM/VMAF)</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Format encoding</div>
+              <div class="flex items-center gap-2"><span class="text-[#8888a8]">○</span> Delivery & export</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agents Tab -->
+      <div id="tab-agents" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-lg font-semibold">Agent Harness</h3>
+            <p class="text-sm text-[#8888a8]">Manage and configure AI agents for your cloning pipeline</p>
+          </div>
+          <button onclick="showNotification('Agent marketplace coming soon!','info')" class="px-4 py-2 bg-[#6c5ce7] rounded-lg text-sm font-semibold hover:bg-[#5a4bd6] transition">
+            + Add Custom Agent
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4" id="agents-grid">
+        </div>
+      </div>
+
+      <!-- Tools Tab -->
+      <div id="tab-tools" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-lg font-semibold">Free Tools Suite</h3>
+            <p class="text-sm text-[#8888a8]">16 powerful tools for video cloning and manipulation</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="tab-btn active px-3 py-1.5 text-sm" onclick="filterTools('all',this)">All</button>
+            <button class="tab-btn px-3 py-1.5 text-sm text-[#8888a8]" onclick="filterTools('video',this)">Video</button>
+            <button class="tab-btn px-3 py-1.5 text-sm text-[#8888a8]" onclick="filterTools('audio',this)">Audio</button>
+            <button class="tab-btn px-3 py-1.5 text-sm text-[#8888a8]" onclick="filterTools('ai',this)">AI</button>
+            <button class="tab-btn px-3 py-1.5 text-sm text-[#8888a8]" onclick="filterTools('util',this)">Utility</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-4 gap-4" id="tools-grid">
+        </div>
+      </div>
+
+      <!-- Editor Tab -->
+      <div id="tab-editor" class="tab-content hidden">
+        <div class="gradient-border p-5 mb-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold flex items-center gap-2"><span>🎬</span> Timeline Editor</h3>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1 bg-[#1a1a2e] rounded text-xs hover:bg-[#2a2a3e] transition" onclick="editorAction('undo')">↩ Undo</button>
+              <button class="px-3 py-1 bg-[#1a1a2e] rounded text-xs hover:bg-[#2a2a3e] transition" onclick="editorAction('redo')">↪ Redo</button>
+              <button class="px-3 py-1 bg-[#6c5ce7] rounded text-xs hover:bg-[#5a4bd6] transition" onclick="editorAction('play')">▶ Play</button>
+              <button class="px-3 py-1 bg-[#1a1a2e] rounded text-xs hover:bg-[#2a2a3e] transition" onclick="editorAction('stop')">⏹ Stop</button>
+            </div>
+          </div>
+
+          <!-- Time ruler -->
+          <div class="relative mb-2 h-6 bg-[#1a1a2e] rounded-t-lg overflow-hidden">
+            <div class="flex h-full items-end px-2">
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:0%">0:00</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:12.5%">0:05</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:25%">0:10</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:37.5%">0:15</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:50%">0:20</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:62.5%">0:25</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:75%">0:30</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:87.5%">0:35</span>
+              <span class="text-[9px] mono text-[#8888a8] absolute" style="left:97%">0:40</span>
+            </div>
+            <!-- Playhead -->
+            <div id="playhead" class="absolute top-0 w-0.5 h-full bg-red-500 z-10" style="left:25%">
+              <div class="w-3 h-3 bg-red-500 rounded-full -ml-[5px] -mt-1"></div>
+            </div>
+          </div>
+
+          <!-- Tracks -->
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <div class="w-20 text-[10px] text-[#8888a8] flex-shrink-0">🎥 Video 1</div>
+              <div class="timeline-track flex-1">
+                <div class="timeline-clip bg-[#6c5ce7]/60" style="left:0%;width:30%">Intro Scene</div>
+                <div class="timeline-clip bg-[#6c5ce7]/40" style="left:32%;width:25%">Main Content</div>
+                <div class="timeline-clip bg-[#6c5ce7]/60" style="left:59%;width:20%">B-Roll</div>
+                <div class="timeline-clip bg-[#6c5ce7]/40" style="left:81%;width:19%">Outro</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-20 text-[10px] text-[#8888a8] flex-shrink-0">🎥 Video 2</div>
+              <div class="timeline-track flex-1">
+                <div class="timeline-clip bg-[#00cec9]/40" style="left:5%;width:15%">Overlay</div>
+                <div class="timeline-clip bg-[#00cec9]/40" style="left:40%;width:20%">PIP</div>
+                <div class="timeline-clip bg-[#00cec9]/40" style="left:70%;width:15%">Transition</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-20 text-[10px] text-[#8888a8] flex-shrink-0">🗣️ Voice</div>
+              <div class="timeline-track flex-1">
+                <div class="timeline-clip bg-[#fd79a8]/40" style="left:2%;width:45%">Narration Track</div>
+                <div class="timeline-clip bg-[#fd79a8]/40" style="left:50%;width:48%">Narration 2</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-20 text-[10px] text-[#8888a8] flex-shrink-0">🎵 Music</div>
+              <div class="timeline-track flex-1">
+                <div class="timeline-clip bg-[#fdcb6e]/40" style="left:0%;width:100%">Background Music — Lo-Fi Beat</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-20 text-[10px] text-[#8888a8] flex-shrink-0">🔊 SFX</div>
+              <div class="timeline-track flex-1">
+                <div class="timeline-clip bg-[#e17055]/40" style="left:10%;width:5%">Whoosh</div>
+                <div class="timeline-clip bg-[#e17055]/40" style="left:30%;width:3%">Click</div>
+                <div class="timeline-clip bg-[#e17055]/40" style="left:55%;width:4%">Ding</div>
+                <div class="timeline-clip bg-[#e17055]/40" style="left:80%;width:5%">Swoosh</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="gradient-border p-4">
+            <h4 class="text-xs font-semibold mb-3 text-[#8888a8]">SOURCE</h4>
+            <div class="aspect-video bg-[#0a0a0f] rounded-lg flex items-center justify-center relative overflow-hidden">
+              <div class="text-center">
+                <div class="text-4xl mb-2">🎥</div>
+                <div class="text-xs text-[#8888a8]">Original Video</div>
+              </div>
+              <div class="absolute bottom-2 left-2 badge bg-red-500/20 text-red-400">SOURCE</div>
+            </div>
+          </div>
+          <div class="gradient-border p-4">
+            <h4 class="text-xs font-semibold mb-3 text-[#8888a8]">CLONED OUTPUT</h4>
+            <div class="aspect-video bg-[#0a0a0f] rounded-lg flex items-center justify-center relative overflow-hidden">
+              <div class="text-center">
+                <div class="text-4xl mb-2 animate-float">✨</div>
+                <div class="text-xs text-[#8888a8]">Cloned Video Preview</div>
+              </div>
+              <div class="absolute bottom-2 left-2 badge bg-green-500/20 text-green-400">OUTPUT</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Tab -->
+      <div id="tab-export" class="tab-content hidden">
+        <div class="gradient-border p-6 mb-6">
+          <h3 class="text-lg font-semibold mb-4">📦 Export Center</h3>
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-[#1a1a2e] rounded-xl p-4 border border-[#2a2a3e] cursor-pointer hover:border-[#6c5ce7] transition" onclick="selectExportFormat(this,'mp4')">
+              <div class="text-2xl mb-2">🎬</div>
+              <div class="text-sm font-semibold">MP4 (H.264)</div>
+              <div class="text-xs text-[#8888a8] mt-1">Best compatibility</div>
+              <div class="text-[10px] mono text-[#00cec9] mt-2">1080p • 30fps • 8Mbps</div>
+            </div>
+            <div class="bg-[#1a1a2e] rounded-xl p-4 border border-[#6c5ce7] cursor-pointer hover:border-[#6c5ce7] transition ring-2 ring-[#6c5ce7]" onclick="selectExportFormat(this,'webm')">
+              <div class="text-2xl mb-2">🌐</div>
+              <div class="text-sm font-semibold">WebM (VP9)</div>
+              <div class="text-xs text-[#8888a8] mt-1">Web optimized</div>
+              <div class="text-[10px] mono text-[#00cec9] mt-2">1080p • 60fps • 6Mbps</div>
+            </div>
+            <div class="bg-[#1a1a2e] rounded-xl p-4 border border-[#2a2a3e] cursor-pointer hover:border-[#6c5ce7] transition" onclick="selectExportFormat(this,'mov')">
+              <div class="text-2xl mb-2">🍎</div>
+              <div class="text-sm font-semibold">MOV (ProRes)</div>
+              <div class="text-xs text-[#8888a8] mt-1">Professional quality</div>
+              <div class="text-[10px] mono text-[#00cec9] mt-2">4K • 30fps • 50Mbps</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label class="text-xs text-[#8888a8] mb-1 block">Resolution</label>
+              <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                <option>3840 × 2160 (4K)</option>
+                <option selected>1920 × 1080 (1080p)</option>
+                <option>1280 × 720 (720p)</option>
+                <option>854 × 480 (480p)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-[#8888a8] mb-1 block">Frame Rate</label>
+              <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                <option>24 fps (Cinema)</option>
+                <option selected>30 fps (Standard)</option>
+                <option>60 fps (Smooth)</option>
+              </select>
+            </div>
+          </div>
+
+          <button onclick="startExport()" class="w-full py-3 bg-gradient-to-r from-[#6c5ce7] to-[#00cec9] rounded-lg text-sm font-bold hover:opacity-90 transition">
+            📦 Export Cloned Video
+          </button>
+        </div>
+
+        <!-- Export History -->
+        <div class="gradient-border p-5">
+          <h4 class="text-sm font-semibold mb-3">Export History</h4>
+          <div class="space-y-2" id="export-history">
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs Tab -->
+      <div id="tab-logs" class="tab-content hidden">
+        <div class="gradient-border p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold flex items-center gap-2"><span>📋</span> Activity Logs</h3>
+            <div class="flex gap-2">
+              <button onclick="clearLogs()" class="px-3 py-1 bg-[#1a1a2e] rounded text-xs hover:bg-[#2a2a3e] transition">Clear</button>
+              <button onclick="exportLogs()" class="px-3 py-1 bg-[#1a1a2e] rounded text-xs hover:bg-[#2a2a3e] transition">Export</button>
+            </div>
+          </div>
+          <div class="bg-[#0a0a0f] rounded-lg p-4 h-96 overflow-y-auto mono text-xs space-y-1" id="log-container">
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="tab-content hidden">
+        <div class="grid grid-cols-2 gap-6">
+          <div class="gradient-border p-5">
+            <h3 class="text-sm font-semibold mb-4">⚙️ General Settings</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Default Output Format</label>
+                <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                  <option>MP4 (H.264)</option>
+                  <option>WebM (VP9)</option>
+                  <option>MOV (ProRes)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Max Concurrent Agents</label>
+                <input type="range" min="1" max="12" value="8" class="w-full" id="agent-limit">
+                <div class="text-xs mono text-[#8888a8] mt-1">Current: <span id="agent-limit-val">8</span></div>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">GPU Memory Allocation</label>
+                <input type="range" min="2" max="16" value="8" class="w-full" id="gpu-mem">
+                <div class="text-xs mono text-[#8888a8] mt-1">Current: <span id="gpu-mem-val">8</span> GB</div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Auto-save projects</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-[#2a2a3e] peer-checked:bg-[#6c5ce7] rounded-full transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition peer-checked:after:translate-x-4"></div>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Enable hardware acceleration</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-[#2a2a3e] peer-checked:bg-[#6c5ce7] rounded-full transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition peer-checked:after:translate-x-4"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="gradient-border p-5">
+            <h3 class="text-sm font-semibold mb-4">🤖 Agent Configuration</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">AI Model Backend</label>
+                <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                  <option>Local (Open Source Models)</option>
+                  <option>Hybrid (Local + Cloud)</option>
+                  <option>Cloud Only</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Voice Clone Model</label>
+                <select class="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none">
+                  <option>XTTS v2 (Open Source)</option>
+                  <option>Bark (Suno)</option>
+                  <option>Coqui TTS</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Scene Detection Sensitivity</label>
+                <input type="range" min="1" max="10" value="7" class="w-full">
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Quality Threshold (VMAF)</label>
+                <input type="range" min="60" max="100" value="85" class="w-full">
+                <div class="text-xs mono text-[#8888a8] mt-1">Minimum: 85</div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Enable experimental agents</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer">
+                  <div class="w-9 h-5 bg-[#2a2a3e] peer-checked:bg-[#6c5ce7] rounded-full transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition peer-checked:after:translate-x-4"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="gradient-border p-5 col-span-2">
+            <h3 class="text-sm font-semibold mb-4">📁 Storage & Paths</h3>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Working Directory</label>
+                <div class="flex gap-2">
+                  <input type="text" value="/home/user/open-video-cloner/workspace" class="flex-1 bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-xs mono outline-none">
+                  <button class="px-3 py-2 bg-[#1a1a2e] rounded-lg text-xs hover:bg-[#2a2a3e]">📁</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Output Directory</label>
+                <div class="flex gap-2">
+                  <input type="text" value="/home/user/open-video-cloner/output" class="flex-1 bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-xs mono outline-none">
+                  <button class="px-3 py-2 bg-[#1a1a2e] rounded-lg text-xs hover:bg-[#2a2a3e]">📁</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs text-[#8888a8] mb-1 block">Cache Directory</label>
+                <div class="flex gap-2">
+                  <input type="text" value="/home/user/open-video-cloner/.cache" class="flex-1 bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-xs mono outline-none">
+                  <button class="px-3 py-2 bg-[#1a1a2e] rounded-lg text-xs hover:bg-[#2a2a3e]">📁</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between">
+              <div class="text-xs text-[#8888a8]">
+                Disk Usage: <span class="text-[#fdcb6e] mono">23.4 GB</span> / 100 GB
+              </div>
+              <button onclick="showNotification('Cache cleared!','success')" class="px-3 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition">
+                🗑️ Clear Cache
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <footer class="h-8 bg-[#12121a] border-t border-[#2a2a3e] flex items-center justify-between px-4 flex-shrink-0">
+      <div class="flex items-center gap-4 text-[10px] mono text-[#8888a8]">
+        <span class="flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-green-400"></div> Connected</span>
+        <span>Agents: <span class="text-[#00cec9]" id="agents-active-count">8/8 active</span></span>
+        <span>Queue: <span class="text-[#fdcb6e]" id="queue-count">2 jobs</span></span>
+      </div>
+      <div class="flex items-center gap-4 text-[10px] mono text-[#8888a8]">
+        <span>GPU: <span class="text-[#00cec9]">42%</span></span>
+        <span>Memory: <span class="text-[#fdcb6e]">4.2/16 GB</span></span>
+        <span id="clock">00:00:00</span>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<!-- Notification Container -->
+<div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+<!-- Modal -->
+<div id="modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+  <div class="bg-[#12121a] border border-[#2a2a3e] rounded-2xl p-6 max-w-lg w-full mx-4 animate-slide-up">
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+let agents = [];
+let tools = [];
+let jobs = [];
+let logs = [];
+let pipelineProgress = 0;
+
+// ===== INITIALIZATION =====
+async function init() {
+  await fetchState();
+  renderAgentStatus();
+  renderPipeline();
+  renderJobs();
+  renderAgentsGrid();
+  renderTools();
+  renderLogs();
+  renderExportHistory();
+  startClock();
+  
+  // Start polling state from server
+  setInterval(fetchState, 3000);
+}
+
+async function fetchState() {
+  try {
+    const res = await fetch('/api/state');
+    const data = await res.json();
+    agents = data.agents;
+    tools = data.tools;
+    jobs = data.jobs;
+    logs = data.logs;
+    pipelineProgress = data.pipelineProgress;
+    
+    // Check if we need to update UI based on state changes (simplified here)
+    if (document.getElementById('tab-agents').classList.contains('hidden') === false) {
+      renderAgentsGrid();
+    }
+    if (document.getElementById('tab-dashboard').classList.contains('hidden') === false) {
+      renderAgentStatus();
+      renderJobs();
+      const pb = document.getElementById('pipeline-progress-bar');
+      if (pb) pb.style.width = pipelineProgress + '%';
+      const pt = document.getElementById('pipeline-progress-text');
+      if (pt) pt.textContent = Math.round(pipelineProgress) + '%';
+    }
+    if (document.getElementById('tab-logs').classList.contains('hidden') === false) {
+      renderLogs();
+    }
+    
+    // Update queue count
+    const queuedJobs = jobs.filter(j => j.status === 'queued').length;
+    const queueCountEl = document.getElementById('queue-count');
+    if (queueCountEl) queueCountEl.textContent = queuedJobs + ' jobs';
+    
+  } catch (e) {
+    console.error('Failed to fetch state:', e);
+  }
+}
+
+// ===== RENDER FUNCTIONS =====
+function renderAgentStatus() {
+  const container = document.getElementById('agent-status-list');
+  if (!container) return;
+  container.innerHTML = agents.map(a => \`
+    <div class="flex items-center gap-3 p-2 rounded-lg bg-[#1a1a2e] hover:bg-[#2a2a3e] transition cursor-pointer">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style="background:\${a.color}22">\${a.icon}</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-semibold truncate">\${a.name}</div>
+        <div class="w-full h-1 bg-[#2a2a3e] rounded-full mt-1">
+          <div class="h-full rounded-full transition-all" style="width:\${a.load}%;background:\${a.color}"></div>
+        </div>
+      </div>
+      <div class="text-[10px] mono" style="color:\${a.color}">\${Math.round(a.load)}%</div>
+    </div>
+  \`).join('');
+}
+
+function renderPipeline() {
+  const stages = [
+    { name:'Input', icon:'📥', status:'done', color:'#6c5ce7' },
+    { name:'Analyze', icon:'🧠', status:'done', color:'#00cec9' },
+    { name:'Extract', icon:'📋', status:'done', color:'#fd79a8' },
+    { name:'Generate', icon:'📝', status:'processing', color:'#fdcb6e' },
+    { name:'Voice', icon:'🗣️', status:'pending', color:'#e17055' },
+    { name:'Compose', icon:'🎬', status:'pending', color:'#a29bfe' },
+    { name:'Quality', icon:'✅', status:'pending', color:'#00cec9' },
+    { name:'Export', icon:'📦', status:'pending', color:'#00b894' },
+  ];
+  const container = document.getElementById('pipeline-viz');
+  if (!container) return;
+  container.innerHTML = stages.map((s,i) => \`
+    <div class="flex items-center">
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-all \${s.status==='processing'?'animate-pulse ring-2 ring-offset-2 ring-offset-[#12121a]':''}" 
+             style="background:\${s.color}22;border:2px solid \${s.status==='done'?s.color:s.status==='processing'?s.color:'#2a2a3e'}">
+          \${s.icon}
+        </div>
+        <span class="text-[9px] \${s.status==='done'?'text-green-400':s.status==='processing'?'':'text-[#8888a8]'}" style="\${s.status==='processing'?\`color:\${s.color}\`:''}">\${s.name}</span>
+        \${s.status==='done'?'<span class="text-[8px] text-green-400">✓</span>':s.status==='processing'?'<span class="text-[8px]" style="color:'+s.color+'">◐</span>':'<span class="text-[8px] text-[#8888a8]">○</span>'}
+      </div>
+      \${i<stages.length-1?\`<div class="w-8 h-0.5 mx-1 \${s.status==='done'?'bg-green-400/30':'bg-[#2a2a3e]'}"></div>\`:\`\`}
+    </div>
+  \`).join('');
+}
+
+function renderJobs() {
+  const container = document.getElementById('jobs-table');
+  if (!container) return;
+  container.innerHTML = jobs.map(j => \`
+    <tr class="border-b border-[#2a2a3e]/50 hover:bg-[#1a1a2e]/50 transition">
+      <td class="py-3 pr-4 mono text-xs text-[#6c5ce7]">\${j.id}</td>
+      <td class="py-3 pr-4 text-xs">\${j.source}</td>
+      <td class="py-3 pr-4">
+        <div class="flex gap-1">\${Array(j.agents).fill(0).map(()=>'<div class="w-1.5 h-1.5 rounded-full bg-[#00cec9]"></div>').join('')}</div>
+      </td>
+      <td class="py-3 pr-4">
+        <span class="badge \${j.status==='completed'?'bg-green-500/20 text-green-400':j.status==='processing'?'bg-[#fdcb6e]/20 text-[#fdcb6e]':'bg-[#8888a8]/20 text-[#8888a8]'}">
+          \${j.status==='completed'?'✓':j.status==='processing'?'◐':'○'} \${j.status}
+        </span>
+      </td>
+      <td class="py-3 pr-4 mono text-xs">\${j.duration}</td>
+      <td class="py-3">
+        <div class="flex gap-1">
+          <button class="px-2 py-0.5 bg-[#1a1a2e] rounded text-[10px] hover:bg-[#2a2a3e] transition" onclick="showNotification('Opening job \${j.id}...','info')">View</button>
+          \${j.status==='completed'?'<button class="px-2 py-0.5 bg-[#6c5ce7]/20 text-[#6c5ce7] rounded text-[10px] hover:bg-[#6c5ce7]/30 transition" onclick="showNotification(\\'Downloading...\\',\\'success\\')">⬇</button>':''}
+        </div>
+      </td>
+    </tr>
+  \`).join('');
+}
+
+function renderAgentsGrid() {
+  const container = document.getElementById('agents-grid');
+  if (!container) return;
+  container.innerHTML = agents.map(a => \`
+    <div class="agent-card gradient-border p-5 active cursor-pointer" onclick="showAgentDetail('\${a.id}')">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background:\${a.color}22">\${a.icon}</div>
+        <div class="flex items-center gap-1">
+          <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+          <span class="text-[10px] text-green-400">Active</span>
+        </div>
+      </div>
+      <h4 class="text-sm font-semibold mb-1">\${a.name}</h4>
+      <p class="text-xs text-[#8888a8] mb-3 line-clamp-2">\${a.desc}</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-[#8888a8]">Load</div>
+          <div class="text-xs font-bold mono" style="color:\${a.color}">\${Math.round(a.load)}%</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-[#8888a8]">Tasks</div>
+          <div class="text-xs font-bold mono">\${a.tasks.toLocaleString()}</div>
+        </div>
+        <button class="px-2 py-1 rounded text-[10px] hover:bg-[#2a2a3e] transition" style="color:\${a.color}">Configure →</button>
+      </div>
+    </div>
+  \`).join('');
+}
+
+function renderTools(filter='all') {
+  const container = document.getElementById('tools-grid');
+  if (!container) return;
+  const filtered = filter==='all'?tools:tools.filter(t=>t.cat===filter);
+  container.innerHTML = filtered.map(t => \`
+    <div class="tool-btn gradient-border p-4 cursor-pointer" data-cat="\${t.cat}" onclick="showToolDetail('\${t.name}')">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl mb-3" style="background:\${t.color}22">\${t.icon}</div>
+      <h4 class="text-sm font-semibold mb-1">\${t.name}</h4>
+      <p class="text-xs text-[#8888a8]">\${t.desc}</p>
+      <div class="mt-3 flex items-center justify-between">
+        <span class="badge bg-green-500/20 text-green-400 text-[9px]">FREE</span>
+        <span class="text-[10px] text-[#8888a8] capitalize">\${t.cat}</span>
+      </div>
+    </div>
+  \`).join('');
+}
+
+function renderLogs() {
+  const container = document.getElementById('log-container');
+  if (!container) return;
+  container.innerHTML = logs.map(l => \`
+    <div class="log-entry flex gap-3">
+      <span class="text-[#8888a8] flex-shrink-0">[\${l.time}]</span>
+      <span class="\${l.type==='success'?'text-green-400':l.type==='warn'?'text-[#fdcb6e]':l.type==='error'?'text-red-400':'text-[#00cec9]'} flex-shrink-0">[\${l.type.toUpperCase()}]</span>
+      <span class="text-[#e8e8f0]">\${l.msg}</span>
+    </div>
+  \`).join('');
+}
+
+function renderExportHistory() {
+  const container = document.getElementById('export-history');
+  if (!container) return;
+  const exports = [
+    { name:'tech_review_clone_v2.webm', size:'245 MB', format:'WebM', time:'2 hours ago', status:'done' },
+    { name:'cooking_tutorial_final.mp4', size:'512 MB', format:'MP4', time:'5 hours ago', status:'done' },
+    { name:'japan_vlog_remix.mov', size:'1.2 GB', format:'MOV', time:'Yesterday', status:'done' },
+  ];
+  container.innerHTML = exports.map(e => \`
+    <div class="flex items-center gap-3 p-3 bg-[#1a1a2e] rounded-lg hover:bg-[#2a2a3e] transition">
+      <div class="text-xl">\${e.format==='WebM'?'🌐':e.format==='MP4'?'🎬':'🍎'}</div>
+      <div class="flex-1">
+        <div class="text-xs font-semibold mono">\${e.name}</div>
+        <div class="text-[10px] text-[#8888a8]">\${e.size} • \${e.format} • \${e.time}</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-2 py-1 bg-[#6c5ce7]/20 text-[#6c5ce7] rounded text-[10px] hover:bg-[#6c5ce7]/30 transition" onclick="showNotification('Download started','success')">⬇ Download</button>
+        <button class="px-2 py-1 bg-[#1a1a2e] rounded text-[10px] hover:bg-[#2a2a3e] transition" onclick="showNotification('Opening in editor','info')">Edit</button>
+      </div>
+    </div>
+  \`).join('');
+}
+
+// ===== NAVIGATION =====
+function switchTab(e, tab) {
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  
+  if (e && e.currentTarget) {
+    e.currentTarget.classList.add('active');
+  } else {
+    // If called without event, match the tab by its inner text/content
+    document.querySelectorAll('.nav-item').forEach(el=>{
+      if(el.getAttribute('onclick') && el.getAttribute('onclick').includes(tab)) {
+        el.classList.add('active');
+      }
+    });
+  }
+  
+  const titles = {
+    dashboard:'Dashboard', workflow:'Workflow', agents:'Agent Harness',
+    tools:'All Tools', editor:'Timeline Editor', export:'Export Center',
+    logs:'Activity Logs', settings:'Settings'
+  };
+  const badges = {
+    dashboard:'Overview', workflow:'Pipeline', agents:'8 Active',
+    tools:'16 Tools', editor:'Timeline', export:'Ready',
+    logs:'Live', settings:'Config'
+  };
+  
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.textContent = titles[tab];
+  
+  const pageBadge = document.getElementById('page-badge');
+  if (pageBadge) pageBadge.textContent = badges[tab];
+}
+
+// ===== TOOL FILTER =====
+function filterTools(cat, btn) {
+  document.querySelectorAll('#tab-tools .tab-btn').forEach(b=>{b.classList.remove('active');b.classList.add('text-[#8888a8]')});
+  btn.classList.add('active');
+  btn.classList.remove('text-[#8888a8]');
+  renderTools(cat);
+}
+
+// ===== ACTIONS =====
+async function analyzeSource() {
+  const url = document.getElementById('source-url').value;
+  if(!url) { showNotification('Please enter a source URL','warn'); return; }
+  showNotification('Analyzing source video...','info');
+  await addLog('info','Analyzing source: '+url.substring(0,50)+'...');
+  setTimeout(async ()=>{
+    await addLog('success','Analysis complete: 1080p, 30fps, 4:32 duration, 47 scenes detected');
+    showNotification('Analysis complete! 47 scenes detected.','success');
+  },2000);
+}
+
+async function startCloning() {
+  // Prevent multiple clicks from spawning duplicate jobs if we wanted to be strict,
+  // but let's just rely on backend creating a new job.
+  showNotification('🚀 Agentic cloning pipeline started!','success');
+  await addLog('info','Starting agentic cloning pipeline...');
+  await addLog('info','Activating 8 agents in parallel...');
+  
+  const source = document.getElementById('source-url') ? document.getElementById('source-url').value : '';
+  
+  try {
+    const res = await fetch('/api/clone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source })
+    });
+    
+    const data = await res.json();
+    if(data.status === 'started') {
+      // Backend will update state, the poller will fetch it.
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function startExport() {
+  showNotification('📦 Export started...','info');
+  await addLog('info','Exporting video in WebM (VP9) format...');
+  
+  try {
+    await fetch('/api/export', { method: 'POST' });
+    setTimeout(async ()=>{
+      await addLog('success','Export complete: cloned_video_output.webm (245 MB)');
+      showNotification('✅ Export complete! File ready for download.','success');
+    },3000);
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function selectExportFormat(el, fmt) {
+  el.parentElement.querySelectorAll('.rounded-xl').forEach(e=>{e.classList.remove('ring-2','ring-[#6c5ce7]');e.style.borderColor='#2a2a3e'});
+  el.classList.add('ring-2','ring-[#6c5ce7]');
+  el.style.borderColor='#6c5ce7';
+}
+
+function editorAction(action) {
+  const msgs = { undo:'Undo performed', redo:'Redo performed', play:'Playing timeline...', stop:'Playback stopped' };
+  showNotification(msgs[action],'info');
+  
+  if(window.playInterval) {
+    clearInterval(window.playInterval);
+    window.playInterval = null;
+  }
+  
+  if(action==='play') {
+    let pos = 25;
+    const playhead = document.getElementById('playhead');
+    window.playInterval = setInterval(()=>{
+      pos += 0.5;
+      if(pos>100) { clearInterval(window.playInterval); window.playInterval = null; pos=0; }
+      if (playhead) playhead.style.left = pos+'%';
+    },50);
+  }
+}
+
+function showAgentDetail(id) {
+  const agent = agents.find(a=>a.id===id);
+  if(!agent) return;
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-content').innerHTML = \`
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style="background:\${agent.color}22">\${agent.icon}</div>
+      <div>
+        <h3 class="text-lg font-bold">\${agent.name}</h3>
+        <p class="text-xs text-[#8888a8]">Agent ID: \${agent.id} • Status: <span class="text-green-400">Active</span></p>
+      </div>
+    </div>
+    <p class="text-sm text-[#8888a8] mb-4">\${agent.desc}</p>
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="bg-[#1a1a2e] rounded-lg p-3 text-center">
+        <div class="text-lg font-bold mono" style="color:\${agent.color}">\${Math.round(agent.load)}%</div>
+        <div class="text-[10px] text-[#8888a8]">Current Load</div>
+      </div>
+      <div class="bg-[#1a1a2e] rounded-lg p-3 text-center">
+        <div class="text-lg font-bold mono">\${agent.tasks.toLocaleString()}</div>
+        <div class="text-[10px] text-[#8888a8]">Tasks Completed</div>
+      </div>
+      <div class="bg-[#1a1a2e] rounded-lg p-3 text-center">
+        <div class="text-lg font-bold mono text-green-400">99.2%</div>
+        <div class="text-[10px] text-[#8888a8]">Success Rate</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeModal();showNotification('Agent \${agent.name} restarted','success')" class="flex-1 py-2 bg-[#6c5ce7] rounded-lg text-sm font-semibold hover:bg-[#5a4bd6] transition">Restart Agent</button>
+      <button onclick="closeModal()" class="flex-1 py-2 bg-[#1a1a2e] rounded-lg text-sm font-semibold hover:bg-[#2a2a3e] transition">Close</button>
+    </div>
+  \`;
+  modal.classList.remove('hidden');
+}
+
+function showToolDetail(name) {
+  const tool = tools.find(t=>t.name===name);
+  if(!tool) return;
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-content').innerHTML = \`
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style="background:\${tool.color}22">\${tool.icon}</div>
+      <div>
+        <h3 class="text-lg font-bold">\${tool.name}</h3>
+        <span class="badge bg-green-500/20 text-green-400">FREE & OPEN SOURCE</span>
+      </div>
+    </div>
+    <p class="text-sm text-[#8888a8] mb-4">\${tool.desc}. This tool is part of the Open Video Cloner free tools suite and can be used independently or as part of the agentic pipeline.</p>
+    <div class="bg-[#1a1a2e] rounded-lg p-3 mb-4">
+      <div class="text-xs text-[#8888a8] mb-2">Quick Stats</div>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div><div class="text-sm font-bold mono text-[#00cec9]">Fast</div><div class="text-[9px] text-[#8888a8]">Speed</div></div>
+        <div><div class="text-sm font-bold mono text-[#6c5ce7]">GPU</div><div class="text-[9px] text-[#8888a8]">Accelerated</div></div>
+        <div><div class="text-sm font-bold mono text-[#fd79a8]">v2.0</div><div class="text-[9px] text-[#8888a8]">Version</div></div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeModal();showNotification('Launching \${tool.name}...','success')" class="flex-1 py-2 bg-gradient-to-r from-[#6c5ce7] to-[#00cec9] rounded-lg text-sm font-bold hover:opacity-90 transition">Launch Tool</button>
+      <button onclick="closeModal()" class="flex-1 py-2 bg-[#1a1a2e] rounded-lg text-sm font-semibold hover:bg-[#2a2a3e] transition">Close</button>
+    </div>
+  \`;
+  modal.classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// ===== NOTIFICATIONS =====
+function showNotification(msg, type='info') {
+  const container = document.getElementById('notification-container');
+  if(!container) return;
+  const colors = { info:'#6c5ce7', success:'#00b894', warn:'#fdcb6e', error:'#e17055' };
+  const icons = { info:'ℹ️', success:'✅', warn:'⚠️', error:'❌' };
+  const el = document.createElement('div');
+  el.className = 'animate-slide-up flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm max-w-sm';
+  el.style.cssText = \`background:\${colors[type]}15;border-color:\${colors[type]}44;\`;
+  el.innerHTML = \`
+    <span>\${icons[type]}</span>
+    <span class="text-sm flex-1">\${msg}</span>
+    <button onclick="this.parentElement.remove()" class="text-[#8888a8] hover:text-white transition">✕</button>
+  \`;
+  container.appendChild(el);
+  setTimeout(()=>el.remove(), 4000);
+}
+
+// ===== LOGGING =====
+async function addLog(type, msg) {
+  try {
+    await fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, msg })
+    });
+    // Will be fetched in next interval
+    const now = new Date();
+    const time = now.toTimeString().substring(0,8);
+    logs.push({time, type, msg});
+    renderLogs();
+    const container = document.getElementById('log-container');
+    if (container) container.scrollTop = container.scrollHeight;
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function clearLogs() {
+  try {
+    await fetch('/api/logs', { method: 'DELETE' });
+    logs = [];
+    renderLogs();
+    showNotification('Logs cleared','info');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function exportLogs() {
+  showNotification('Logs exported to clipboard','success');
+}
+
+// ===== CLOCK =====
+function startClock() {
+  setInterval(()=>{
+    const clock = document.getElementById('clock');
+    if (clock) clock.textContent = new Date().toTimeString().substring(0,8);
+  },1000);
+}
+
+// ===== SETTINGS SLIDERS =====
+document.addEventListener('DOMContentLoaded', ()=>{
+  init();
+  
+  const agentLimit = document.getElementById('agent-limit');
+  if(agentLimit) agentLimit.addEventListener('input', e=>{
+    document.getElementById('agent-limit-val').textContent = e.target.value;
+  });
+  
+  const gpuMem = document.getElementById('gpu-mem');
+  if(gpuMem) gpuMem.addEventListener('input', e=>{
+    document.getElementById('gpu-mem-val').textContent = e.target.value;
+  });
+});
+</script>
+<div style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#241b2c;color:#fff;border-top:1px solid #f59e0b;padding:9px 16px;text-align:center;font:12px system-ui">PROTOTYPE UI · AI agents, cloning, media processing and exports are not connected. Do not treat sample content as real results.</div></body>
+</html>
