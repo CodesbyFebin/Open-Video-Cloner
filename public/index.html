@@ -323,7 +323,7 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
           </select>
         </div>
         <button onclick="startCloning()" class="px-4 py-1.5 bg-gradient-to-r from-[#6c5ce7] to-[#00cec9] rounded-lg text-sm font-semibold hover:opacity-90 transition">
-          ▶ Run Pipeline
+          ▶ Process Uploaded File
         </button>
         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#fd79a8] to-[#fdcb6e] flex items-center justify-center text-sm font-bold cursor-pointer">
           U
@@ -334,7 +334,21 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
     <!-- Content Area -->
     <div class="flex-1 overflow-y-auto p-6" id="content-area">
       <!-- Dashboard Tab -->
-      <div id="tab-dashboard" class="tab-content">
+      <div id="tab-dashboard" class="tab-content"><div class="gradient-border p-5 mb-6" id="real-media-tools">
+  <div class="flex items-center justify-between mb-3"><h2 class="text-base font-bold">FFmpeg Media Tools</h2><span class="text-xs text-green-400">Real local processing · No AI cloning</span></div>
+  <p class="text-xs text-[#8888a8] mb-4">Upload a video, inspect its real metadata, then convert, trim or extract a frame. This runs on your local server.</p>
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+    <label class="text-xs md:col-span-2">Video file<input id="media-file" type="file" accept="video/*,.mkv,.avi" class="block w-full text-xs mt-2"/></label>
+    <label class="text-xs">Operation<select id="media-operation" class="block w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded p-2 mt-2"><option value="transcode">Convert</option><option value="trim">Trim</option><option value="frame">Extract frame</option></select></label>
+    <label class="text-xs">Format<select id="media-format" class="block w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded p-2 mt-2"><option value="mp4">MP4</option><option value="webm">WebM</option><option value="mov">MOV</option></select></label>
+    <button type="button" onclick="startCloning()" class="bg-[#6c5ce7] rounded p-2 text-sm font-semibold">Upload & Process</button>
+  </div>
+  <div class="grid grid-cols-2 gap-3 mt-3">
+    <label class="text-xs">Start time (seconds)<input id="media-start" type="number" min="0" step="0.1" value="0" class="block w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded p-2 mt-1"/></label>
+    <label class="text-xs">End time (optional)<input id="media-end" type="number" min="0" step="0.1" placeholder="Full duration" class="block w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded p-2 mt-1"/></label>
+  </div>
+  <p id="media-feedback" role="status" aria-live="polite" class="text-xs text-[#00cec9] mt-3">Ready to upload.</p>
+</div>
         <!-- Stats Row -->
         <div class="grid grid-cols-4 gap-4 mb-6">
           <div class="gradient-border p-4">
@@ -342,24 +356,24 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
               <span class="text-xs text-[#8888a8]">Videos Processed</span>
               <span class="text-lg">🎥</span>
             </div>
-            <div class="text-2xl font-bold mono" id="stat-videos">247</div>
-            <div class="text-xs text-green-400 mt-1">↑ 12% this week</div>
+            <div class="text-2xl font-bold mono" id="stat-videos">0</div>
+            <div class="text-xs text-green-400 mt-1">Based on completed jobs</div>
           </div>
           <div class="gradient-border p-4">
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs text-[#8888a8]">Active Agents</span>
               <span class="text-lg">🤖</span>
             </div>
-            <div class="text-2xl font-bold mono" id="stat-agents">8</div>
-            <div class="text-xs text-[#00cec9] mt-1">All healthy</div>
+            <div class="text-2xl font-bold mono" id="stat-agents">0</div>
+            <div class="text-xs text-[#00cec9] mt-1">AI agents unavailable</div>
           </div>
           <div class="gradient-border p-4">
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs text-[#8888a8]">Tools Available</span>
               <span class="text-lg">🧰</span>
             </div>
-            <div class="text-2xl font-bold mono" id="stat-tools">16</div>
-            <div class="text-xs text-[#fdcb6e] mt-1">4 new this month</div>
+            <div class="text-2xl font-bold mono" id="stat-tools">3</div>
+            <div class="text-xs text-[#fdcb6e] mt-1">FFmpeg convert · trim · frame</div>
           </div>
           <div class="gradient-border p-4">
             <div class="flex items-center justify-between mb-2">
@@ -379,9 +393,9 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
             </h3>
             <div class="space-y-3">
               <div>
-                <label class="text-xs text-[#8888a8] mb-1 block">Source Video URL or Upload</label>
+                <label class="text-xs text-[#8888a8] mb-1 block">Legacy source URL (not supported)</label>
                 <div class="flex gap-2">
-                  <input type="text" id="source-url" placeholder="https://youtube.com/watch?v=... or drag & drop video file" class="flex-1 bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#6c5ce7] transition">
+                  <input type="text" id="source-url" placeholder="Use the upload form above; remote URLs are disabled" class="flex-1 bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#6c5ce7] transition">
                   <button onclick="analyzeSource()" class="px-4 py-2 bg-[#6c5ce7] rounded-lg text-sm font-semibold hover:bg-[#5a4bd6] transition">
                     🔍 Analyze
                   </button>
@@ -767,7 +781,7 @@ body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(-
           </div>
 
           <button onclick="startExport()" class="w-full py-3 bg-gradient-to-r from-[#6c5ce7] to-[#00cec9] rounded-lg text-sm font-bold hover:opacity-90 transition">
-            📦 Export Cloned Video
+            📦 Download Latest Output
           </button>
         </div>
 
@@ -1369,5 +1383,67 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 });
 </script>
-<div style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#241b2c;color:#fff;border-top:1px solid #f59e0b;padding:9px 16px;text-align:center;font:12px system-ui">PROTOTYPE UI · AI agents, cloning, media processing and exports are not connected. Do not treat sample content as real results.</div></body>
+<div style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#241b2c;color:#fff;border-top:1px solid #f59e0b;padding:9px 16px;text-align:center;font:12px system-ui">FFmpeg media processing is active when configured locally. AI cloning, voice/face agents and the legacy timeline remain illustrative.</div><script>
+(function(){
+  const originalFetchState=fetchState;
+  const escapeHTML=(value)=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const feedback=msg=>{const el=document.getElementById('media-feedback');if(el)el.textContent=msg;};
+  fetchState=async function(){
+    await originalFetchState();
+    document.getElementById('stat-videos').textContent=jobs.filter(j=>j.status==='completed').length;
+    document.getElementById('stat-agents').textContent='0';
+    document.getElementById('stat-tools').textContent='3';
+    renderJobs();renderExportHistory();renderPipeline();
+  };
+  renderJobs=function(){
+    const target=document.getElementById('jobs-table');if(!target)return;
+    target.innerHTML=jobs.length?jobs.map(j=>'<tr class="border-b border-[#2a2a3e]"><td class="py-3 mono text-xs">'+escapeHTML(j.id.slice(0,8))+'</td><td class="py-3 text-xs">'+escapeHTML(j.source)+'</td><td class="py-3 text-xs">FFmpeg</td><td class="py-3 text-xs">'+escapeHTML(j.status)+' ('+Number(j.progress||0)+'%)</td><td class="py-3 text-xs">'+escapeHTML(j.duration)+'</td><td class="py-3 text-xs">'+(j.downloadUrl?'<a class="text-[#00cec9] underline" href="'+encodeURI(j.downloadUrl)+'">Download</a>':escapeHTML(j.error||'—'))+'</td></tr>').join(''):'<tr><td class="py-3 text-xs text-[#8888a8]" colspan="6">No processing jobs yet.</td></tr>';
+  };
+  renderExportHistory=function(){
+    const target=document.getElementById('export-history');if(!target)return;
+    const complete=jobs.filter(j=>j.status==='completed'&&j.downloadUrl);
+    target.innerHTML=complete.length?complete.map(j=>'<div class="text-xs p-2 border-b border-[#2a2a3e]"><a class="text-[#00cec9] underline" href="'+encodeURI(j.downloadUrl)+'">'+escapeHTML(j.operation+' · '+j.source+' · '+j.format)+'</a></div>').join(''):'<p class="text-xs text-[#8888a8]">No completed exports yet.</p>';
+  };
+  renderPipeline=function(){
+    const target=document.getElementById('pipeline-viz');if(!target)return;
+    const job=jobs[0];target.textContent=job?job.operation+' · '+job.status+' · '+job.progress+'%':'No active media job';
+  };
+  analyzeSource=async function(){feedback('Select a local video in the FFmpeg tools panel. URL downloading is disabled.');};
+  startCloning=async function(){
+    const file=document.getElementById('media-file').files[0];
+    if(!file)return feedback('Choose a video file first.');
+    try{
+      feedback('Uploading '+file.name+'…');
+      const form=new FormData();form.append('file',file);
+      const uploadedResponse=await fetch('/api/upload',{method:'POST',body:form});
+      const uploaded=await uploadedResponse.json();
+      if(!uploadedResponse.ok)throw Error(uploaded.error||'Upload failed');
+      feedback('Video validated: '+uploaded.metadata.duration.toFixed(2)+'s. Starting FFmpeg job…');
+      const body={uploadId:uploaded.id,operation:document.getElementById('media-operation').value,format:document.getElementById('media-format').value};
+      const start=document.getElementById('media-start').value;
+      const end=document.getElementById('media-end').value;
+      if(start!=='')body.start=Number(start);
+      if(end!=='')body.end=Number(end);
+      const res=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const job=await res.json();if(!res.ok)throw Error(job.error||'Job failed');
+      feedback('Job '+job.id.slice(0,8)+' queued. Progress appears in the jobs table.');
+      await fetchState();
+    }catch(err){feedback(err.message);showNotification(err.message,'warn');}
+  };
+  startExport=function(){
+    const output=jobs.find(j=>j.status==='completed'&&j.downloadUrl);
+    if(output)window.location.assign(output.downloadUrl);
+    else showNotification('No completed output to download.','warn');
+  };
+  clearLogs=async function(){showNotification('Job logs are retained as processing evidence.','info');};
+  exportLogs=function(){navigator.clipboard?.writeText(JSON.stringify(logs,null,2));showNotification('Current job log data copied.','info');};
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(typeof EventSource!=='undefined'){
+      const events=new EventSource('/api/events');
+      events.onmessage=()=>fetchState();
+      events.onerror=()=>feedback('Live event connection interrupted; periodic refresh remains available.');
+    }
+  });
+})();
+</script></body>
 </html>
