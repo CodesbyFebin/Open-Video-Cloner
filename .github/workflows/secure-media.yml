@@ -1,7 +1,7 @@
 name: Secure media CI
 on:
   push:
-    branches: [main, feat/auth-projects-cancel-timeline]
+    branches: [main, feat/v0.4-sqlite-isolated-workers]
   pull_request:
 jobs:
   node-and-browser:
@@ -23,5 +23,12 @@ jobs:
         run: npm test
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Browser processing test
+      - name: Browser processing test (local FFmpeg)
+        run: npm run test:browser
+      - name: Build isolated worker
+        run: docker build -t ovc-ffmpeg:local -f Dockerfile.worker .
+      - name: Browser processing test (Docker worker, network denied)
+        env:
+          OVC_WORKER_MODE: docker
+          DATA_DIR: ${{ runner.temp }}/ovc-docker-e2e
         run: npm run test:browser
