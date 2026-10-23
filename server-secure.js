@@ -13,7 +13,7 @@ function createApp({dataDir=process.env.DATA_DIR||path.join(__dirname,'data'),ap
  const store=openStore(dir);const previous={projects:read('projects.json',[]),jobs:read('jobs.json',[]),uploads:read('uploads.json',[])};
  let projects=store.load('projects'),jobs=store.load('jobs'),uploads=store.load('uploads');
  if(!projects.length&&!jobs.length&&!uploads.length&&Object.values(previous).some(v=>v.length)){({projects,jobs,uploads}=previous);store.saveAll({projects,jobs,uploads})}
- for(const j of jobs)if(['processing','queued'].includes(j.status)){j.status='interrupted';j.error='Server restarted';j.updatedAt=new Date().toISOString()}store.saveAll({projects,jobs,uploads});
+ for(const j of jobs)if(['processing','cancelling'].includes(j.status)){j.status='interrupted';j.error='Worker result uncertain after server restart; manual retry required';j.updatedAt=new Date().toISOString()}store.saveAll({projects,jobs,uploads});
  const app=express(),watchers=new Set(),running=new Map();let busy=false;
  const now=()=>new Date().toISOString(),broadcast=()=>{for(const r of watchers)r.write('data: {"type":"state"}\n\n')};
  const saveJobs=()=>{store.saveAll({projects,jobs,uploads});broadcast()};
@@ -45,6 +45,7 @@ function createApp({dataDir=process.env.DATA_DIR||path.join(__dirname,'data'),ap
  app.get('/api/events',(q,r)=>{r.setHeader('Content-Type','text/event-stream');r.setHeader('Cache-Control','no-cache');r.flushHeaders();r.write('data: {"type":"connected"}\n\n');watchers.add(r);const t=setInterval(()=>r.write(': heartbeat\n\n'),20000);q.on('close',()=>{clearInterval(t);watchers.delete(r)})});
  app.post('/api/maintenance/cleanup',(q,r)=>{const days=Number(q.body?.days??30);if(!Number.isInteger(days)||days<1||days>365)return r.status(400).json({error:'Invalid retention days'});const cutoff=Date.now()-days*864e5;const removed=jobs.filter(j=>!['queued','processing','cancelling'].includes(j.status)&&Date.parse(j.updatedAt)<cutoff);jobs=jobs.filter(j=>!removed.includes(j));for(const j of removed)fs.rmSync(path.join(outs,j.id+'.'+j.format),{force:true});const refs=new Set(jobs.flatMap(j=>j.inputId?[j.inputId]:(j.clips||[]).map(c=>c.uploadId)));const old=uploads.filter(u=>Date.parse(u.createdAt)<cutoff&&!refs.has(u.id));uploads=uploads.filter(u=>!old.includes(u));for(const u of old)fs.rmSync(path.join(ins,u.id),{force:true});save('uploads.json',uploads);saveJobs();r.json({deletedJobs:removed.length,deletedUploads:old.length})});
  app.post('/api/clone',(_q,r)=>r.status(501).json({error:'AI cloning unavailable'}));app.post('/api/export',(_q,r)=>r.status(501).json({error:'Use completed job download'}));
+ setImmediate(work); // resume jobs that were durable queued and not yet started
  return app;
 }
 if(require.main===module){const host=process.env.HOST||'127.0.0.1';createApp().listen(Number(process.env.PORT||3000),host,()=>console.log('Open Video Cloner running'))}
