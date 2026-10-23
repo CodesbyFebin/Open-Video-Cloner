@@ -14,7 +14,7 @@ function createApp({dataDir=process.env.DATA_DIR||path.join(__dirname,'data'),ap
  const now=()=>new Date().toISOString(),broadcast=()=>{for(const r of watchers)r.write('data: {"type":"state"}\n\n')};
  const saveJobs=()=>{save('jobs.json',jobs);broadcast()};
  const view=j=>({id:j.id,projectId:j.projectId,source:j.source,operation:j.operation,format:j.format,status:j.status,progress:j.progress,duration:j.duration,error:j.error||null,createdAt:j.createdAt,updatedAt:j.updatedAt,downloadUrl:j.status==='completed'?'/api/jobs/'+j.id+'/download':null});
- app.disable('x-powered-by');app.use(express.json({limit:'32kb'}));app.use(express.static(path.join(__dirname,'public')));
+ app.disable('x-powered-by');app.use(express.json({limit:'32kb'}));app.get('/',(_q,r)=>r.redirect('/secure.html'));app.use(express.static(path.join(__dirname,'public')));
  app.get('/api/health',(_q,r)=>r.json({status:'ok',mode:'ffmpeg'}));
  app.use('/api',(req,res,next)=>{const token=(req.get('authorization')||'').replace(/^Bearer /,'');const a=Buffer.from(token),b=Buffer.from(apiKey);if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return res.status(401).json({error:'Unauthorized'});next()});
  const exists=id=>projects.some(p=>p.id===id);
