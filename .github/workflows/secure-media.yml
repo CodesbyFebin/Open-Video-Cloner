@@ -1,0 +1,27 @@
+name: Secure media CI
+on:
+  push:
+    branches: [main, feat/auth-projects-cancel-timeline]
+  pull_request:
+jobs:
+  node-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OVC_API_KEY: ci-test-secret-at-least-24-bytes-long
+      HOST: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Unit and API tests
+        run: npm test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser processing test
+        run: npm run test:browser
