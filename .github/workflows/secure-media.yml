@@ -27,6 +27,8 @@ jobs:
         run: npm run test:browser
       - name: Build isolated worker
         run: docker build -t ovc-ffmpeg:local -f Dockerfile.worker .
+      - name: Adversarial Docker confinement gate
+        run: node scripts/check-sandbox.js
       - name: Browser processing test (Docker worker, network denied)
         env:
           OVC_WORKER_MODE: docker
