@@ -1,0 +1,2 @@
+const {defineConfig}=require('@playwright/test');
+module.exports=defineConfig({testDir:'./browser-tests',timeout:150000,use:{headless:true},webServer:{command:'node server-secure.js',url:'http://127.0.0.1:3000/api/health',reuseExistingServer:false,timeout:30000}});
