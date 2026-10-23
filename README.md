@@ -1,66 +1,55 @@
 # Open Video Cloner
 
-A local-first FFmpeg media-processing workbench, with an experimental UI for future AI-assisted video adaptation.
+**v0.3 secure local-workspace candidate.** Real FFmpeg conversion, trimming, frame extraction, authenticated projects, cancellation, retention cleanup, and sequential timeline rendering. Not an AI cloning engine.
 
-> **Status: FFmpeg MVP v0.2 — not an AI video cloner.** Real local video upload, inspection, conversion, trimming, frame extraction and downloads are implemented. The eight AI agents, voice/face cloning, script synthesis, model-driven style transfer and legacy timeline are not implemented. Illustrative legacy UI panels do not represent real processing.
+## Startup
 
-## Run locally
+Install Node.js 20+, FFmpeg and FFprobe. Generate a secret and set the environment variable OVC_API_KEY to 32+ random characters. Example shell command:
 
-Requirements: Node.js 20+, FFmpeg and FFprobe on PATH, free disk space for uploads and exports.
+    export OVC_API_KEY="$(openssl rand -hex 32)"
+    npm install
+    npm test
+    npm start
 
-```sh
-npm install
-npm test
-npm start
-```
+Open http://127.0.0.1:3000/secure.html and paste the API key. The browser stores it only in page memory.
 
-Open http://127.0.0.1:3000. Use the **FFmpeg Media Tools** panel on the dashboard to upload a local video, select convert/trim/frame, and create a job. Watch the real job status and download completed output.
+To run the browser E2E test, install Chromium with npx playwright install chromium, then run npm run test:browser. The test generates actual video using FFmpeg.
 
-The server binds to `127.0.0.1` by default. **Do not expose it on the public internet:** there is no user authentication, rate limiting, quotas per account, or hardened worker sandbox yet. Only submit media you are authorized to process.
+## API
 
-## Implemented backend
+All /api routes except /api/health require Authorization: Bearer <OVC_API_KEY>. This is a shared instance-wide key, **not multi-user authentication**.
 
-| Endpoint | Function |
-| --- | --- |
-| `GET /api/health` | Service status |
-| `POST /api/upload` | Multipart `file` upload, size cap, FFprobe validation |
-| `POST /api/jobs` | Create convert, trim or frame job from `uploadId` |
-| `GET /api/jobs` | Persistent job list |
-| `GET /api/jobs/:id` | Job status and real FFmpeg percentage |
-| `GET /api/jobs/:id/download` | Download completed media artifact |
-| `GET /api/events` | Server-sent job state notifications |
-| `GET /api/state` | Dashboard state derived from durable jobs |
-| `POST /api/clone` | HTTP 501; AI cloning unavailable |
-| `POST /api/export` | HTTP 501; use completed job download URL |
+- POST /api/projects — create project with name
+- GET /api/projects — list projects
+- POST /api/projects/:id/uploads — multipart video upload, validated through FFprobe
+- GET /api/projects/:id/uploads — list media
+- POST /api/projects/:id/jobs — conversion, trim, frame, timeline
+- GET /api/projects/:id/jobs — project-specific jobs
+- GET /api/jobs/:id — job status
+- POST /api/jobs/:id/cancel — cancel queued or processing job
+- GET /api/jobs/:id/download — authenticated completed artifact
+- POST /api/maintenance/cleanup — JSON body with days: 30
+- GET /api/events — authenticated SSE (secure UI uses polling instead)
+- POST /api/clone — HTTP 501, AI cloning not implemented
 
-Example JSON for `POST /api/jobs`:
+Timeline payload example:
 
-```json
-{"uploadId":"<id-returned-from-upload>","operation":"trim","format":"mp4","start":1,"end":5}
-```
+    {"operation":"timeline","clips":[{"uploadId":"UUID","start":0,"end":2},{"uploadId":"UUID","start":2,"end":4}]}
 
-Operations: `transcode` (MP4/WebM/MOV), `trim` (seconds), `frame` (JPEG at `start`). Input accepts .mp4, .mov, .mkv, .webm, .m4v and .avi with actual video stream. Invalid or oversized files are rejected.
+Timeline rendering concatenates 1–12 video clips, maximum 30 minutes, normalized to 1280x720 at 30fps, MP4 H.264. It produces **video without audio** and is not a multitrack editor.
 
-## Persistence and progress
+## Security boundaries
 
-Uploaded videos and FFprobe records live under `data/inputs`. Exports are stored under `data/outputs`; durable job records are saved to `data/jobs.json` with atomic replacement. A single FFmpeg worker processes jobs sequentially and broadcasts status changes through SSE. Interrupted jobs are marked as interrupted on restart rather than falsely declared complete. Data retention and cleanup are currently manual.
+The server binds localhost by default. Requests to protected endpoints require a secret. Media filenames are randomized, uploads capped, FFprobe validates video metadata, FFmpeg args use spawn without a shell, workers are single-concurrency and have a default one-hour timeout, and terminal data can be deleted by explicit retention cleanup.
 
-## Tests
+**Not safe for internet exposure or hostile media yet.** FFmpeg is a child process in the Node OS security domain, not an isolated container. There is no cgroup/seccomp sandbox, dedicated unprivileged worker identity, quota, per-user access controls, TLS proxy or automated retention scheduler. Before public deployment put FFmpeg in a locked-down container or VM with no network, per-job temporary mounts, resource limits and unprivileged identity.
 
-`npm test` runs validation tests, server lifecycle tests with a deterministic worker, and a **real** generated-video FFmpeg/FFprobe smoke test when those executables are installed. GitHub Actions installs FFmpeg and runs them. Do not assume CI passed until checking the actual workflow status.
+The legacy root dashboard is illustrative and does not use the new authenticated API. Use /secure.html. JSON persistence is single-process only; multiple replicas must not share the same files.
 
-## Security and implementation boundaries
+## Verification
 
-- No external URL downloading; avoids server-side URL-fetch abuse.
-- FFmpeg arguments are constructed as arrays for `spawn`, not interpolated into a shell command.
-- Filenames on disk use random UUIDs and upload size is capped at 256 MiB by default (`MAX_UPLOAD_BYTES` can lower/raise up to 1 GiB).
-- Local server only; not production safe for untrusted users or publicly exposed upload traffic.
-- Future milestones: authentication, quotas, cancellation, worker isolation, retention, timeline rendering, and separately configurable consent-driven AI model adapters.
-
-## Jules developer automation (experimental)
-
-An initial `jules/automation.mjs` validation module exists. Jules cloud sessions are separate from local FFmpeg jobs and must not be mistaken for video-processing agents. Developer CLI integration remains pending.
+Unit/API and Playwright browser tests have been added. The browser test generates and processes real test media. Do not claim CI passed without checking the actual workflow run.
 
 ## License
 
-MIT for repository-authored code. Models, media and third-party assets have separate rights and licenses.
+MIT applies to repository-authored code; media, models and dependencies have their own rights and licenses.
