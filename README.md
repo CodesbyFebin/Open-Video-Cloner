@@ -53,3 +53,22 @@ Unit/API and Playwright browser tests have been added. The browser test generate
 ## License
 
 MIT applies to repository-authored code; media, models and dependencies have their own rights and licenses.
+
+## v0.4 candidate: SQLite + Docker media boundary
+
+Node.js 22.13+ is required for built-in `node:sqlite`. Data is stored in `data/state.sqlite` with WAL and transactional snapshot commits. Existing JSON data is imported on first start only if the database is empty. Retain backups of the old JSON data before upgrade.
+
+Default `npm start` continues to execute FFmpeg directly on the local host for development and is **not sandboxed**.
+
+To exercise the Docker boundary, build the dedicated worker and enable the mode:
+
+```sh
+docker build -t ovc-ffmpeg:local -f Dockerfile.worker .
+export OVC_WORKER_MODE=docker
+export OVC_API_KEY="$(openssl rand -hex 32)"
+npm start
+```
+
+Docker mode runs FFmpeg and FFprobe using a container with no networking, read-only root, dropped capabilities, no-new-privileges, restricted process/memory/CPU budgets, temporary filesystem and mounted input media as read-only. Outputs are mounted writable. The runner requires a trusted, configured Docker daemon; use only on a Linux host where bind mounts and UID permissions have been verified. It is not a substitute for a hardened VM or full independent security assessment.
+
+**Limitations:** still one shared instance API key (not per-user RBAC), one Node process, manual retention, interruption rather than automatic requeue after a crash, and no tested multi-replica worker lease. User accounts, independent worker service, retries and richer audit controls remain future tasks. The CI workflow adds Docker-mode browser processing; examine its run result before claiming Docker isolation verified.

@@ -25,7 +25,7 @@ function parseOptions(body, sourceDuration) {
 function ffprobe(file, executable = process.env.FFPROBE_PATH || 'ffprobe') {
   return new Promise((resolve,reject) => {
     let output = '', errors = '';
-    const child = spawn(executable,['-v','error','-show_format','-show_streams','-of','json',file],{stdio:['ignore','pipe','pipe']});
+    const child = spawn(executable,['-v','error','-protocol_whitelist','file,pipe','-show_format','-show_streams','-of','json',file],{stdio:['ignore','pipe','pipe']});
     const timer = setTimeout(()=>child.kill('SIGKILL'),15000);
     child.stdout.on('data',d=>{output+=d; if(output.length>1024*1024)child.kill('SIGKILL');});
     child.stderr.on('data',d=>{errors+=d;});
@@ -45,7 +45,7 @@ function ffprobe(file, executable = process.env.FFPROBE_PATH || 'ffprobe') {
 }
 
 function buildArgs(input, output, options) {
-  const args=['-hide_banner','-nostdin','-y','-v','error'];
+  const args=['-hide_banner','-nostdin','-y','-v','error','-protocol_whitelist','file,pipe'];
   if(options.operation==='frame') {
     return [...args,'-ss',String(options.start),'-i',input,'-frames:v','1','-update','1',output];
   }
